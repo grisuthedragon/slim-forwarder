@@ -11,6 +11,7 @@ from fastapi.responses import JSONResponse
 from urllib.parse import urlparse
 
 from .services import registry
+from typing import List
 
 
 def create_proxy_endpoint():
@@ -83,13 +84,14 @@ app = FastAPI(title="Dynamic Web Proxy")
 async def add_service(service_id: str, request: Request) -> JSONResponse:
     """
     Add or update a service configuration.
-    Body: {"host": "string", "port": integer, "protocol": "http"|"https"}
+    Body: {"host": "string", "port": integer, "protocol": "http"|"https", "tags": ["tag1", "tag2"]}
     """
     try:
         data = await request.json()
         host = data.get("host")
         port = data.get("port")
         protocol = data.get("protocol", "http")
+        tags = data.get("tags", [])
 
         if not host or port is None:
             return JSONResponse(
@@ -103,10 +105,18 @@ async def add_service(service_id: str, request: Request) -> JSONResponse:
                 content={"error": "Protocol must be 'http' or 'https'"}
             )
 
-        service = registry.add_service(id=service_id, host=host, port=int(port), protocol=protocol)
+        service = registry.add_service(
+            id=service_id, host=host, port=int(port), protocol=protocol, tags=tags
+        )
         return JSONResponse(
             status_code=201,
-            content={"id": service.id, "host": service.host, "port": service.port, "protocol": service.protocol}
+            content={
+                "id": service.id,
+                "host": service.host,
+                "port": service.port,
+                "protocol": service.protocol,
+                "tags": service.tags,
+            },
         )
     except Exception as e:
         return JSONResponse(status_code=400, content={"error": str(e)})
@@ -122,6 +132,20 @@ async def delete_service(service_id: str) -> JSONResponse:
     return JSONResponse(status_code=404, content={"error": f"Service '{service_id}' not found"})
 
 
+@app.delete("/tags/{tag}")
+async def delete_services_by_tag(tag: str) -> JSONResponse:
+    """
+    Delete all services with a given tag.
+    """
+    deleted = registry.delete_services_by_tag(tag)
+    if deleted:
+        return JSONResponse(
+            status_code=200,
+            content={"deleted": deleted, "count": len(deleted)},
+        )
+    return JSONResponse(status_code=404, content={"error": f"No services found with tag '{tag}'"})
+
+
 @app.get("/health")
 async def health_check() -> JSONResponse:
     """Health check endpoint."""
@@ -134,7 +158,10 @@ async def list_services() -> JSONResponse:
     services = registry.list_services()
     return JSONResponse(
         status_code=200,
-        content={sid: {"host": s.host, "port": s.port, "protocol": s.protocol} for sid, s in services.items()}
+        content={
+            sid: {"host": s.host, "port": s.port, "protocol": s.protocol, "tags": s.tags}
+            for sid, s in services.items()
+        },
     )
 
 

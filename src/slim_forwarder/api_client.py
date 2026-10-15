@@ -4,7 +4,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 import os
-from typing import Dict, Optional
+from typing import Dict, List, Optional
 
 import httpx
 
@@ -91,7 +91,8 @@ def sync_add_service(
     service_id: str,
     host: str,
     port: int,
-    protocol: str = "http"
+    protocol: str = "http",
+    tags: List[str] = None,
 ) -> Dict:
     """Synchronously register a service.
 
@@ -101,15 +102,17 @@ def sync_add_service(
         host: Backend host address
         port: Backend port number
         protocol: Protocol (http or https)
+        tags: List of tags for the service
 
     Returns:
         Service configuration as dict
     """
+    payload = {"host": host, "port": port, "protocol": protocol}
+    if tags:
+        payload["tags"] = tags
+
     with httpx.Client(base_url=base_url, timeout=30.0) as client:
-        response = client.post(
-            f"/edit/{service_id}",
-            json={"host": host, "port": port, "protocol": protocol}
-        )
+        response = client.post(f"/edit/{service_id}", json=payload)
         response.raise_for_status()
         return response.json()
 

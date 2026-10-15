@@ -6,7 +6,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 import argparse
 import json
 import sys
-from typing import Optional
+from typing import List, Optional
 
 import yaml
 
@@ -34,6 +34,8 @@ def cmd_register(args: argparse.Namespace) -> int:
             protocol = config.get("protocol") if args.protocol == "http" else args.protocol
             # Default to http if neither config nor CLI provides it
             protocol = protocol or "http"
+            # Get tags from config or CLI (CLI tags override config)
+            tags = config.get("tags", []) if not hasattr(args, "tag") or not args.tag else args.tag
         except Exception as e:
             print(f"Error loading config file: {e}", file=sys.stderr)
             return 1
@@ -42,6 +44,7 @@ def cmd_register(args: argparse.Namespace) -> int:
         host = args.host
         port = args.port
         protocol = args.protocol or "http"
+        tags = args.tag or []
 
     # Validate required fields
     if not service_id:
@@ -55,7 +58,7 @@ def cmd_register(args: argparse.Namespace) -> int:
         return 1
 
     try:
-        result = sync_add_service(args.url, service_id, host, port, protocol)
+        result = sync_add_service(args.url, service_id, host, port, protocol, tags)
         if args.json:
             print(format_json(result))
         else:
@@ -157,6 +160,11 @@ def create_parser() -> argparse.ArgumentParser:
         choices=["http", "https"],
         default="http",
         help="Protocol (http or https, default: http)",
+    )
+    register_parser.add_argument(
+        "--tag",
+        action="append",
+        help="Tag(s) for the service (can be specified multiple times)",
     )
     register_parser.add_argument(
         "--config",

@@ -24,6 +24,16 @@ class TestService:
         service = Service(id="test", host="example.com", port=443, protocol="https")
         assert service.protocol == "https"
 
+    def test_service_with_tags(self):
+        """Test creating a Service with tags."""
+        service = Service(id="test", host="example.com", port=80, tags=["production", "api"])
+        assert service.tags == ["production", "api"]
+
+    def test_service_default_tags(self):
+        """Test that Service has empty tags list by default."""
+        service = Service(id="test", host="example.com", port=80)
+        assert service.tags == []
+
 
 class TestServiceRegistry:
     """Tests for the ServiceRegistry class."""
@@ -92,3 +102,28 @@ class TestServiceRegistry:
         assert service.host == "newhost.com"
         assert service.port == 8080
         assert self.registry.get_service("test").host == "newhost.com"
+
+    def test_add_service_with_tags(self):
+        """Test adding a service with tags."""
+        service = self.registry.add_service("test", "example.com", 80, tags=["production"])
+        assert service.tags == ["production"]
+
+    def test_delete_services_by_tag(self):
+        """Test deleting services by tag."""
+        self.registry.add_service("service1", "example.com", 80, tags=["production", "api"])
+        self.registry.add_service("service2", "example.com", 443, tags=["production"])
+        self.registry.add_service("service3", "example.com", 8080, tags=["staging"])
+
+        deleted = self.registry.delete_services_by_tag("production")
+        assert len(deleted) == 2
+        assert "service1" in deleted
+        assert "service2" in deleted
+        assert self.registry.get_service("service3") is not None
+        assert self.registry.get_service("service1") is None
+        assert self.registry.get_service("service2") is None
+
+    def test_delete_services_by_tag_none_found(self):
+        """Test deleting services by tag when none found."""
+        self.registry.add_service("test", "example.com", 80, tags=["production"])
+        deleted = self.registry.delete_services_by_tag("nonexistent")
+        assert deleted == []

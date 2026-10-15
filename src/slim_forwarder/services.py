@@ -3,8 +3,8 @@
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
-from dataclasses import dataclass
-from typing import Dict, Optional
+from dataclasses import dataclass, field
+from typing import Dict, List, Optional
 
 
 @dataclass
@@ -14,6 +14,7 @@ class Service:
     host: str
     port: int
     protocol: str = "http"
+    tags: List[str] = field(default_factory=list)
 
 
 class ServiceRegistry:
@@ -22,9 +23,11 @@ class ServiceRegistry:
     def __init__(self):
         self._services: Dict[str, Service] = {}
 
-    def add_service(self, id: str, host: str, port: int, protocol: str = "http") -> Service:
+    def add_service(
+        self, id: str, host: str, port: int, protocol: str = "http", tags: List[str] = None
+    ) -> Service:
         """Add or update a service."""
-        service = Service(id=id, host=host, port=port, protocol=protocol)
+        service = Service(id=id, host=host, port=port, protocol=protocol, tags=tags or [])
         self._services[id] = service
         return service
 
@@ -42,6 +45,15 @@ class ServiceRegistry:
     def list_services(self) -> Dict[str, Service]:
         """Return all services."""
         return self._services.copy()
+
+    def delete_services_by_tag(self, tag: str) -> List[str]:
+        """Delete all services with a given tag. Returns list of deleted service IDs."""
+        deleted = []
+        for service_id in list(self._services.keys()):
+            if tag in self._services[service_id].tags:
+                del self._services[service_id]
+                deleted.append(service_id)
+        return deleted
 
 
 # Global registry instance
