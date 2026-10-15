@@ -20,8 +20,9 @@ slim-forwarder = "slim_forwarder.cli:main"
 slim-forwarder-server = "slim_forwarder.server:main"
 
 [project.urls]
-Homepage = "https://github.com/yourorg/slim-forwarder"
-Issues = "https://github.com/yourorg/slim-forwarder/issues"
+Homepage = "https://github.com/grisuthedragon/slim-forwarder"
+Issues = "https://github.com/grisuthedragon/slim-forwarder/issues"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
