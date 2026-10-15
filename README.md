@@ -20,6 +20,9 @@ See the [LICENSE](LICENSE) file for details.
 - Dynamic service registration via REST API
 - In-memory storage (no persistence needed)
 - Support for both HTTP and HTTPS backends
+- Tag-based service organization
+- Bulk delete by tag
+- CLI tool for easy service management
 
 ## Installation
 
@@ -37,21 +40,68 @@ pip install -e .
 
 ### CLI
 
+Start the proxy server:
+
 ```bash
 # Start server with defaults (localhost:8000)
-slim-forwarder
+slim-forwarder server
 
 # Custom host and port
-slim-forwarder --host 0.0.0.0 --port 8080
+slim-forwarder server --host 0.0.0.0 --port 8080
 
 # Enable auto-reload for development
-slim-forwarder --reload
+slim-forwarder server --reload
 ```
 
 ### Module
 
 ```bash
-python -m slim_forwarder
+python -m slim_forwarder server
+```
+
+### Service Management via CLI
+
+Register a service:
+
+```bash
+# Register with CLI arguments
+slim-forwarder register myapi --host api.example.com --port 443 --protocol https
+
+# Register with multiple tags
+slim-forwarder register myapi --host api.example.com --port 443 \
+  --tag production --tag api
+
+# Register using YAML config file
+cat > config.yaml <<EOF
+id: myapi
+host: api.example.com
+port: 443
+protocol: https
+tags:
+  - production
+  - api
+EOF
+
+slim-forwarder register --config config.yaml
+```
+
+Remove a service:
+
+```bash
+slim-forwarder unregister myapi
+```
+
+List all services:
+
+```bash
+slim-forwarder list
+slim-forwarder list --json
+```
+
+Delete all services with a tag:
+
+```bash
+curl -X DELETE http://localhost:8000/tags/production
 ```
 
 ### API Endpoints
@@ -59,22 +109,35 @@ python -m slim_forwarder
 | Method | Path | Description |
 |--------|------|-------------|
 | `GET` | `/health` | Health check |
-| `GET` | `/services` | List all configured services |
-| `POST` | `/edit/{service_id}` | Add/update service |
+| `GET` | `/services` | List all configured services (includes tags) |
+| `POST` | `/edit/{service_id}` | Add/update service (body: `{"host": "...", "port": ..., "protocol": "...", "tags": [...]}`) |
 | `DELETE` | `/edit/{service_id}` | Remove service |
+| `DELETE` | `/tags/{tag}` | Delete all services with given tag |
 | `Any` | `/service/{service_id}/{path}` | Proxy to backend |
 
 ### Example
 
 ```bash
-# Add a service
+# Add a service with tags
 curl -X POST http://localhost:8000/edit/myapi \
   -H "Content-Type: application/json" \
-  -d '{"host": "api.example.com", "port": 443, "protocol": "https"}'
+  -d '{
+    "host": "api.example.com",
+    "port": 443,
+    "protocol": "https",
+    "tags": ["production", "api"]
+  }'
 
 # Proxy a request
 curl http://localhost:8000/service/myapi/users
 
 # List services
 curl http://localhost:8000/services
+
+# Delete all services with "production" tag
+curl -X DELETE http://localhost:8000/tags/production
 ```
+
+### Environment Variables
+
+- `SLIM_FORWARDER_URL` - Base URL of the proxy server (default: `http://localhost:8000`)
