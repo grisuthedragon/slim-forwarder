@@ -110,6 +110,8 @@ curl -X DELETE http://localhost:8000/tags/production
 |--------|------|-------------|
 | `GET` | `/health` | Health check |
 | `GET` | `/services` | List all configured services (includes tags) |
+| `GET` | `/tags` | List all unique tags across services |
+| `GET` | `/tags/{tag}` | List services with a specific tag |
 | `POST` | `/edit/{service_id}` | Add/update service (body: `{"host": "...", "port": ..., "protocol": "...", "tags": [...]}`) |
 | `DELETE` | `/edit/{service_id}` | Remove service |
 | `DELETE` | `/tags/{tag}` | Delete all services with given tag |
@@ -133,6 +135,12 @@ curl http://localhost:8000/service/myapi/users
 
 # List services
 curl http://localhost:8000/services
+
+# Get all tags
+curl http://localhost:8000/tags
+
+# Get services with "production" tag
+curl http://localhost:8000/tags/production
 
 # Delete all services with "production" tag
 curl -X DELETE http://localhost:8000/tags/production
