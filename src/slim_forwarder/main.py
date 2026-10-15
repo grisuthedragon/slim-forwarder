@@ -132,6 +132,32 @@ async def delete_service(service_id: str) -> JSONResponse:
     return JSONResponse(status_code=404, content={"error": f"Service '{service_id}' not found"})
 
 
+@app.get("/tags")
+async def get_all_tags() -> JSONResponse:
+    """
+    Get all unique tags across all services.
+    """
+    tags = registry.get_all_tags()
+    return JSONResponse(status_code=200, content=tags)
+
+
+@app.get("/tags/{tag}")
+async def get_services_by_tag(tag: str) -> JSONResponse:
+    """
+    Get all services with a given tag.
+    """
+    services = registry.get_services_by_tag(tag)
+    if services:
+        return JSONResponse(
+            status_code=200,
+            content=[
+                {"id": s.id, "host": s.host, "port": s.port, "protocol": s.protocol, "tags": s.tags}
+                for s in services
+            ],
+        )
+    return JSONResponse(status_code=404, content={"error": f"No services found with tag '{tag}'"})
+
+
 @app.delete("/tags/{tag}")
 async def delete_services_by_tag(tag: str) -> JSONResponse:
     """

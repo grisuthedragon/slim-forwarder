@@ -127,3 +127,39 @@ class TestServiceRegistry:
         self.registry.add_service("test", "example.com", 80, tags=["production"])
         deleted = self.registry.delete_services_by_tag("nonexistent")
         assert deleted == []
+
+    def test_get_all_tags(self):
+        """Test getting all unique tags."""
+        self.registry.add_service("service1", "example.com", 80, tags=["production", "api"])
+        self.registry.add_service("service2", "example.com", 443, tags=["production", "staging"])
+        self.registry.add_service("service3", "example.com", 8080, tags=["development"])
+
+        tags = self.registry.get_all_tags()
+        assert len(tags) == 4
+        assert "production" in tags
+        assert "api" in tags
+        assert "staging" in tags
+        assert "development" in tags
+
+    def test_get_all_tags_empty(self):
+        """Test getting all tags when no services have tags."""
+        self.registry.add_service("test", "example.com", 80)
+        tags = self.registry.get_all_tags()
+        assert tags == []
+
+    def test_get_services_by_tag(self):
+        """Test getting services by tag."""
+        self.registry.add_service("service1", "example.com", 80, tags=["production", "api"])
+        self.registry.add_service("service2", "example.com", 443, tags=["production"])
+        self.registry.add_service("service3", "example.com", 8080, tags=["staging"])
+
+        services = self.registry.get_services_by_tag("production")
+        assert len(services) == 2
+        assert services[0].id == "service1"
+        assert services[1].id == "service2"
+
+    def test_get_services_by_tag_none_found(self):
+        """Test getting services by tag when none found."""
+        self.registry.add_service("test", "example.com", 80, tags=["production"])
+        services = self.registry.get_services_by_tag("nonexistent")
+        assert services == []

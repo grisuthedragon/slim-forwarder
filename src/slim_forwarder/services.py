@@ -55,6 +55,17 @@ class ServiceRegistry:
                 deleted.append(service_id)
         return deleted
 
+    def get_all_tags(self) -> List[str]:
+        """Return all unique tags across all services."""
+        tags = set()
+        for service in self._services.values():
+            tags.update(service.tags)
+        return sorted(tags)
+
+    def get_services_by_tag(self, tag: str) -> List[Service]:
+        """Return all services that have the given tag."""
+        return [s for s in self._services.values() if tag in s.tags]
+
 
 # Global registry instance
 registry = ServiceRegistry()
