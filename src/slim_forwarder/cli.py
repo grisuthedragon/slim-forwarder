@@ -104,14 +104,9 @@ def cmd_list(args: argparse.Namespace) -> int:
 
 def cmd_server(args: argparse.Namespace) -> int:
     """Handle 'server' subcommand - start the proxy server."""
-    import uvicorn
+    from .server import run
 
-    uvicorn.run(
-        "slim_forwarder.main:app",
-        host=args.host,
-        port=args.port,
-        reload=args.reload,
-    )
+    run(args.host, args.port, args.reload)
     return 0
 
 

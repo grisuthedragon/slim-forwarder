@@ -53,6 +53,13 @@ slim-forwarder server --host 0.0.0.0 --port 8080
 slim-forwarder server --reload
 ```
 
+There is also a dedicated server command with the same flags:
+
+```bash
+slim-forwarder-server
+slim-forwarder-server --host 0.0.0.0 --port 8080 --reload
+```
+
 ### Module
 
 ```bash
